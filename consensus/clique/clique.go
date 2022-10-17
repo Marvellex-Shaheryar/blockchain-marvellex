@@ -185,6 +185,10 @@ type Clique struct {
 	fakeDiff bool // Skip difficulty verifications
 }
 
+func (c *Clique) Protocol() interface{} {
+	return consensus.CliqueProtocol
+}
+
 // New creates a Clique proof-of-authority consensus engine with the initial
 // signers set to the ones provided by the user.
 func New(config *params.CliqueConfig, db ethdb.Database) *Clique {

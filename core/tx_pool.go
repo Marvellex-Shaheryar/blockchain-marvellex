@@ -49,6 +49,7 @@ const (
 	// more expensive to propagate; larger transactions also take more resources
 	// to validate whether they fit into the pool or not.
 	txMaxSize = 4 * txSlotSize // 128KB
+	// Quorum - value above is not used. instead, ChainConfig.TransactionSizeLimit is used
 )
 
 var (
@@ -148,6 +149,10 @@ type TxPoolConfig struct {
 	GlobalQueue  uint64 // Maximum number of non-executable transaction slots for all accounts
 
 	Lifetime time.Duration // Maximum amount of time non-executable transaction are queued
+
+	// Quorum
+	TransactionSizeLimit uint64 // Maximum size allowed for valid transaction (in KB)
+	MaxCodeSize          uint64 // Maximum size allowed of contract code that can be deployed (in KB)
 }
 
 // DefaultTxPoolConfig contains the default configurations for the transaction
@@ -165,6 +170,10 @@ var DefaultTxPoolConfig = TxPoolConfig{
 	GlobalQueue:  1024,
 
 	Lifetime: 3 * time.Hour,
+
+	// Quorum
+	TransactionSizeLimit: 64,
+	MaxCodeSize:          24,
 }
 
 // sanitize checks the provided user configurations and changes anything that's
@@ -517,10 +526,22 @@ func (pool *TxPool) local() map[common.Address]types.Transactions {
 // validateTx checks whether a transaction is valid according to the consensus
 // rules and adheres to some heuristic limits of the local node (price and size).
 func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
-	// Reject transactions over defined size to prevent DOS attacks
-	if uint64(tx.Size()) > txMaxSize {
+
+	// Quorum
+	sizeLimit := pool.chainconfig.TransactionSizeLimit
+	if sizeLimit == 0 {
+		sizeLimit = DefaultTxPoolConfig.TransactionSizeLimit
+	}
+	// Reject transactions over 64KB (or manually set limit) to prevent DOS attacks
+	if float64(tx.Size()) > float64(sizeLimit*1024) {
 		return ErrOversizedData
 	}
+	// Reject transactions over defined size to prevent DOS attacks
+	//if uint64(tx.Size()) > txMaxSize {
+	//	return ErrOversizedData
+	//}
+	// /Quorum
+
 	// Transactions can't be negative. This may never happen using RLP decoded
 	// transactions but may occur if you create a transaction using the RPC.
 	if tx.Value().Sign() < 0 {

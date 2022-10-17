@@ -26,6 +26,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
+	"github.com/ethereum/go-ethereum/consensus/istanbul"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/eth/downloader"
 	"github.com/ethereum/go-ethereum/eth/gasprice"
@@ -59,26 +60,28 @@ var DefaultConfig = Config{
 		DatasetsOnDisk:   2,
 		DatasetsLockMmap: false,
 	},
-	NetworkId:               1,
-	LightPeers:              100,
-	UltraLightFraction:      75,
-	DatabaseCache:           512,
-	TrieCleanCache:          154,
 	TrieCleanCacheJournal:   "triecache",
 	TrieCleanCacheRejournal: 60 * time.Minute,
-	TrieDirtyCache:          256,
-	TrieTimeout:             60 * time.Minute,
 	SnapshotCache:           102,
+	NetworkId:          1337,
+	LightPeers:         100,
+	UltraLightFraction: 75,
+	DatabaseCache:      768,
+	TrieCleanCache:     256,
+	TrieDirtyCache:     256,
+	TrieTimeout:        60 * time.Minute,
 	Miner: miner.Config{
-		GasFloor: 8000000,
-		GasCeil:  8000000,
+		GasFloor: params.MinGasLimit,
+		GasCeil:  params.GenesisGasLimit,
 		GasPrice: big.NewInt(params.GWei),
 		Recommit: 3 * time.Second,
 	},
-	TxPool:      core.DefaultTxPoolConfig,
 	RPCGasCap:   25000000,
 	GPO:         DefaultFullGPOConfig,
 	RPCTxFeeCap: 1, // 1 ether
+	TxPool: core.DefaultTxPoolConfig,
+
+	Istanbul: *istanbul.DefaultConfig,
 }
 
 func init() {
@@ -166,6 +169,11 @@ type Config struct {
 	// Enables tracking of SHA3 preimages in the VM
 	EnablePreimageRecording bool
 
+	RaftMode             bool
+	EnableNodePermission bool
+	// Istanbul options
+	Istanbul istanbul.Config
+
 	// Miscellaneous options
 	DocRoot string `toml:"-"`
 
@@ -187,4 +195,13 @@ type Config struct {
 
 	// CheckpointOracle is the configuration for checkpoint oracle.
 	CheckpointOracle *params.CheckpointOracleConfig `toml:",omitempty"`
+
+	// Istanbul block override (TODO: remove after the fork)
+	OverrideIstanbul *big.Int
+
+	// timeout value for call
+	EVMCallTimeOut time.Duration
+
+	EnableMultitenancy bool
+
 }

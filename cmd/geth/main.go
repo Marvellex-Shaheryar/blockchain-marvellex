@@ -146,6 +146,8 @@ var (
 		utils.RinkebyFlag,
 		utils.GoerliFlag,
 		utils.YoloV2Flag,
+		utils.MarvellexFlag, // Marvellex Mainnet
+		utils.TestnetFlag,   // Marvellex Testnet
 		utils.VMEnableDebugFlag,
 		utils.NetworkIdFlag,
 		utils.EthStatsURLFlag,
@@ -159,6 +161,37 @@ var (
 		utils.EWASMInterpreterFlag,
 		utils.EVMInterpreterFlag,
 		configFileFlag,
+		// Quorum
+		utils.QuorumImmutabilityThreshold,
+		utils.EnableNodePermissionFlag,
+		utils.RaftModeFlag,
+		utils.RaftBlockTimeFlag,
+		utils.RaftJoinExistingFlag,
+		utils.RaftPortFlag,
+		utils.RaftDNSEnabledFlag,
+		utils.EmitCheckpointsFlag,
+		utils.IstanbulRequestTimeoutFlag,
+		utils.IstanbulBlockPeriodFlag,
+		//utils.PluginSettingsFlag,
+		//utils.PluginSkipVerifyFlag,
+		//utils.PluginLocalVerifyFlag,
+		//utils.PluginPublicKeyFlag, Quorum rm
+		utils.AllowedFutureBlockTimeFlag,
+		utils.EVMCallTimeOutFlag,
+		utils.MultitenancyFlag,
+		//utils.QuorumPTMUnixSocketFlag,
+		//utils.QuorumPTMUrlFlag,
+		//utils.QuorumPTMTimeoutFlag,
+		//utils.QuorumPTMDialTimeoutFlag,
+		//utils.QuorumPTMHttpIdleTimeoutFlag,
+		//utils.QuorumPTMHttpWriteBufferSizeFlag,
+		//utils.QuorumPTMHttpReadBufferSizeFlag,
+		//utils.QuorumPTMTlsModeFlag,
+		//utils.QuorumPTMTlsRootCaFlag,
+		//utils.QuorumPTMTlsClientCertFlag,
+		//utils.QuorumPTMTlsClientKeyFlag,
+		//utils.QuorumPTMTlsInsecureSkipVerify,
+		// End-Quorum
 	}
 
 	rpcFlags = []cli.Flag{
@@ -439,6 +472,22 @@ func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend) {
 		}()
 	}
 
+	// Quorum
+	//
+	// checking if permissions is enabled and staring the permissions service
+	//if stack.Config().EnableNodePermission {
+	//	stack.Server().SetIsNodePermissioned(permission.IsNodePermissioned)
+	//	if stack.IsPermissionEnabled() {
+	//		var permissionService *permission.PermissionCtrl
+	//		if err := stack.Service(&permissionService); err != nil {
+	//			utils.Fatalf("Permission service not runnning: %v", err)
+	//		}
+	//		if err := permissionService.AfterStart(); err != nil {
+	//			utils.Fatalf("Permission service post construct failure: %v", err)
+	//		}
+	//	}
+	//}
+
 	// Start auxiliary services if enabled
 	if ctx.GlobalBool(utils.MiningEnabledFlag.Name) || ctx.GlobalBool(utils.DeveloperFlag.Name) {
 		// Mining only makes sense if a full Ethereum node is running
@@ -466,6 +515,9 @@ func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend) {
 			utils.Fatalf("Failed to start mining: %v", err)
 		}
 	}
+
+	// checks quorum features that depend on the ethereum service
+	//quorumValidateEthService(ethback, ctx.GlobalBool(utils.RaftModeFlag.Name)) Quorum TODO
 }
 
 // unlockAccounts unlocks any account specifically requested.

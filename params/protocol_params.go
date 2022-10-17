@@ -19,9 +19,14 @@ package params
 import "math/big"
 
 const (
-	GasLimitBoundDivisor uint64 = 1024    // The bound divisor of the gas limit, used in update calculations.
-	MinGasLimit          uint64 = 5000    // Minimum the gas limit may ever be.
-	GenesisGasLimit      uint64 = 4712388 // Gas limit of the Genesis block.
+	// modified values for Quorum
+	//GasLimitBoundDivisor uint64 = 1024    // The bound divisor of the gas limit, used in update calculations.
+	//MinGasLimit          uint64 = 5000    // Minimum the gas limit may ever be.
+	//GenesisGasLimit      uint64 = 4712388 // Gas limit of the Genesis block.
+
+	GasLimitBoundDivisor uint64 = 4096      // The bound divisor of the gas limit, used in update calculations.
+	MinGasLimit          uint64 = 700000000 // Minimum the gas limit may ever be.
+	GenesisGasLimit      uint64 = 800000000 // Gas limit of the Genesis block.
 
 	MaximumExtraDataSize  uint64 = 32    // Maximum size extra data may be after Genesis.
 	ExpByteGas            uint64 = 10    // Times ceil(log256(exponent)) for the EXP instruction.
@@ -134,7 +139,11 @@ const (
 	Bls12381PairingPerPairGas uint64 = 23000  // Per-point pair gas price for BLS12-381 elliptic curve pairing check
 	Bls12381MapG1Gas          uint64 = 5500   // Gas price for BLS12-381 mapping field element to G1 operation
 	Bls12381MapG2Gas          uint64 = 110000 // Gas price for BLS12-381 mapping field element to G2 operation
-)
+
+	QuorumMaximumExtraDataSize uint64 = 65 // Maximum size extra data may be after Genesis.
+	// Quorum - payload for a transaction, the size of the buffer to 128kb to match the maximum allowed in chain config
+	QuorumMaxPayloadBufferSize uint64 = 128
+	)
 
 // Gas discount table for BLS12-381 G1 and G2 multi exponentiation operations
 var Bls12381MultiExpDiscountTable = [128]uint64{1200, 888, 764, 641, 594, 547, 500, 453, 438, 423, 408, 394, 379, 364, 349, 334, 330, 326, 322, 318, 314, 310, 306, 302, 298, 294, 289, 285, 281, 277, 273, 269, 268, 266, 265, 263, 262, 260, 259, 257, 256, 254, 253, 251, 250, 248, 247, 245, 244, 242, 241, 239, 238, 236, 235, 233, 232, 231, 229, 228, 226, 225, 223, 222, 221, 220, 219, 219, 218, 217, 216, 216, 215, 214, 213, 213, 212, 211, 211, 210, 209, 208, 208, 207, 206, 205, 205, 204, 203, 202, 202, 201, 200, 199, 199, 198, 197, 196, 196, 195, 194, 193, 193, 192, 191, 191, 190, 189, 188, 188, 187, 186, 185, 185, 184, 183, 182, 182, 181, 180, 179, 179, 178, 177, 176, 176, 175, 174}
@@ -145,3 +154,11 @@ var (
 	MinimumDifficulty      = big.NewInt(131072) // The minimum that the difficulty may ever be.
 	DurationLimit          = big.NewInt(13)     // The decision boundary on the blocktime duration used to determine whether difficulty should go up or not.
 )
+
+func GetMaximumExtraDataSize(isQuorum bool) uint64 {
+	if isQuorum {
+		return QuorumMaximumExtraDataSize
+	} else {
+		return MaximumExtraDataSize
+	}
+}

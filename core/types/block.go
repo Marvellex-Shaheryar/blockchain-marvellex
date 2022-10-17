@@ -23,6 +23,7 @@ import (
 	"io"
 	"math/big"
 	"reflect"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -101,6 +102,14 @@ type headerMarshaling struct {
 // Hash returns the block hash of the header, which is simply the keccak256 hash of its
 // RLP encoding.
 func (h *Header) Hash() common.Hash {
+	// If the mix digest is equivalent to the predefined Istanbul digest, use Istanbul
+	// specific hash calculation.
+	if h.MixDigest == IstanbulDigest {
+		// Seal is reserved in extra-data. To prove block is signed by the proposer.
+		if istanbulHeader := IstanbulFilteredHeader(h, true); istanbulHeader != nil {
+			return rlpHash(istanbulHeader)
+		}
+	}
 	return rlpHash(h)
 }
 
@@ -183,6 +192,10 @@ type Block struct {
 	// inter-peer block relay.
 	ReceivedAt   time.Time
 	ReceivedFrom interface{}
+}
+
+func (b *Block) String() string {
+	return fmt.Sprintf("{Header: %v}", b.header)
 }
 
 // DeprecatedTd is an old relic for extracting the TD of a block. It is in the
@@ -415,3 +428,26 @@ func (b *Block) Hash() common.Hash {
 }
 
 type Blocks []*Block
+
+type BlockBy func(b1, b2 *Block) bool
+
+func (self BlockBy) Sort(blocks Blocks) {
+	bs := blockSorter{
+		blocks: blocks,
+		by:     self,
+	}
+	sort.Sort(bs)
+}
+
+type blockSorter struct {
+	blocks Blocks
+	by     func(b1, b2 *Block) bool
+}
+
+func (self blockSorter) Len() int { return len(self.blocks) }
+func (self blockSorter) Swap(i, j int) {
+	self.blocks[i], self.blocks[j] = self.blocks[j], self.blocks[i]
+}
+func (self blockSorter) Less(i, j int) bool { return self.by(self.blocks[i], self.blocks[j]) }
+
+func Number(b1, b2 *Block) bool { return b1.header.Number.Cmp(b2.header.Number) < 0 }

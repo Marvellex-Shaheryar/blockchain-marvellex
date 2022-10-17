@@ -165,6 +165,19 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 		} else {
 			log.Info("Writing custom genesis block")
 		}
+
+		// Quorum: Set default transaction size limit if not set in genesis
+		if genesis.Config.TransactionSizeLimit == 0 {
+			genesis.Config.TransactionSizeLimit = DefaultTxPoolConfig.TransactionSizeLimit
+		}
+
+		// Check transaction size limit and max contract code size
+		err := genesis.Config.IsValid()
+		if err != nil {
+			return genesis.Config, common.Hash{}, err
+		}
+
+		// /Quorum
 		block, err := genesis.Commit(db)
 		if err != nil {
 			return genesis.Config, common.Hash{}, err
@@ -223,12 +236,20 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 	if height == nil {
 		return newcfg, stored, fmt.Errorf("missing block number for head header hash")
 	}
-	compatErr := storedcfg.CheckCompatible(newcfg, *height)
+	compatErr := storedcfg.CheckCompatible(newcfg, *height, rawdb.GetIsQuorumEIP155Activated(db))
 	if compatErr != nil && *height != 0 && compatErr.RewindTo != 0 {
 		return newcfg, stored, compatErr
 	}
 	rawdb.WriteChainConfig(db, stored, newcfg)
 	return newcfg, stored, nil
+}
+
+func checkAndPrintPrivacyEnhancementsWarning(config *params.ChainConfig) {
+	if config.PrivacyEnhancementsBlock != nil {
+		log.Warn("Privacy enhancements have been enabled from block height " + config.PrivacyEnhancementsBlock.String() +
+			". Please ensure your privacy manager is upgraded and supports privacy enhancements (tessera version 1.*) " +
+			"otherwise your quorum node will fail to start.")
+	}
 }
 
 func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
@@ -341,6 +362,32 @@ func DefaultGenesisBlock() *Genesis {
 		GasLimit:   5000,
 		Difficulty: big.NewInt(17179869184),
 		Alloc:      decodePrealloc(mainnetAllocData),
+	}
+}
+
+// DefaultMarvellexGenesisBlock returns the Marvellex network genesis block.
+func DefaultMarvellexGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.MarvellexChainConfig,
+		Timestamp:  1642060800,
+		ExtraData:  hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000f90118f8d294691afe5e81acd3838740b9ae2a40236008a70c1094171741cf00f7b089f21cc476604dc263f9dab6d19454d259bd6371ed44b123ae0b0dae0e56430b2c779460267dbd3db36bf1eb8e9305f6605d082788f9f794dad973ddce1df58a782a1299ae1a5d0a53754d119434aaa05a003f74b8523d9ac849ab5b878012a05d94c6056d1661801ab3ce1db3b6c0cd79581d617612949530fb59937b3010f967f3243e16bb992505c8f994c78b61845308176ceebd1b9d842ed0b1b8221a4b94d1613c47069be1cbaf47b6623d53128a3c6ad2b4b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"),
+		GasLimit:   8000000,
+		Difficulty: big.NewInt(1),
+		Mixhash:    common.HexToHash("0x6d1a7d8ca180c4486a08b61d948590c1dd1c995102dfcb6d80c4daeb5c239dd4"),
+		Alloc:      decodePrealloc(marvellexAllocData),
+	}
+}
+
+// DefaultTestnetGenesisBlock returns the test network v2 genesis block.
+func DefaultTestnetGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.TestnetChainConfig,
+		Timestamp:  1644996400,
+		ExtraData:  hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000f89af85494c876193e35542a1bbd6b6a8ae8335490a77b7e3e94fbc3bc7ae81d4f67357686449845c9146a8a1e2c94c751d15167075dd9f9df6118cf384132f00a3d54948489aa0b72481587ab851f6aaab664ad61ec2d45b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"),
+		GasLimit:   8000000,
+		Difficulty: big.NewInt(1),
+		Mixhash:    common.HexToHash("0x6d1a7d8ca180c4486a08b61d948590c1dd1c995102dfcb6d80c4daeb5c239dd4"),
+		Alloc:      decodePrealloc(testnetAllocData),
 	}
 }
 

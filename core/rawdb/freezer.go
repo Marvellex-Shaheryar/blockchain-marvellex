@@ -52,7 +52,7 @@ const (
 	// freezerRecheckInterval is the frequency to check the key-value database for
 	// chain progression that might permit new blocks to be frozen into immutable
 	// storage.
-	freezerRecheckInterval = time.Minute
+	freezerRecheckInterval = time.Hour
 
 	// freezerBatchLimit is the maximum number of blocks to freeze in one batch
 	// before doing an fsync and deleting it from the key-value store.
@@ -62,10 +62,10 @@ const (
 // freezer is an memory mapped append-only database to store immutable chain data
 // into flat files:
 //
-// - The append only nature ensures that disk writes are minimized.
-// - The memory mapping ensures we can max out system memory for caching without
-//   reserving it for go-ethereum. This would also reduce the memory requirements
-//   of Geth, and thus also GC overhead.
+//   - The append only nature ensures that disk writes are minimized.
+//   - The memory mapping ensures we can max out system memory for caching without
+//     reserving it for go-ethereum. This would also reduce the memory requirements
+//     of Geth, and thus also GC overhead.
 type freezer struct {
 	// WARNING: The `frozen` field is accessed atomically. On 32 bit platforms, only
 	// 64-bit aligned fields can be atomic. The struct is guaranteed to be so aligned,
@@ -308,7 +308,11 @@ func (f *freezer) freeze(db ethdb.KeyValueStore) {
 			log.Error("Current full block number unavailable", "hash", hash)
 			backoff = true
 			continue
-
+		// for Marvellex (ottoman or testnet), do not freeze
+		case *number > 0:
+			log.Error("Do not freeze for Marvellex network", "hash", hash)
+			backoff = true
+			continue
 		case *number < threshold:
 			log.Debug("Current full block not old enough", "number", *number, "hash", hash, "delay", threshold)
 			backoff = true

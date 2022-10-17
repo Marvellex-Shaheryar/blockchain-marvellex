@@ -44,6 +44,10 @@ type EthAPIBackend struct {
 	extRPCEnabled bool
 	eth           *Ethereum
 	gpo           *gasprice.Oracle
+	// Quorum
+	//
+	// hex node id from node public key
+	hexNodeId string
 }
 
 // ChainConfig returns the active chain configuration.

@@ -438,6 +438,10 @@ type Ethash struct {
 	closeOnce sync.Once  // Ensures exit channel will not be closed twice.
 }
 
+func (ethash *Ethash) Protocol() interface{} {
+	return consensus.EthProtocol
+}
+
 // New creates a full sized ethash PoW scheme and starts a background thread for
 // remote mining, also optionally notifying a batch of remote services of new work
 // packages.

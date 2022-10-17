@@ -204,3 +204,87 @@ func dumpConfig(ctx *cli.Context) error {
 
 	return nil
 }
+
+// quorumValidateEthService checks quorum features that depend on the ethereum service
+func quorumValidateEthService(stack *node.Node, isRaft bool) {
+	var ethereum *eth.Ethereum
+	//err := stack.Service(&ethereum)
+	//if err != nil {
+	//	utils.Fatalf("Error retrieving Ethereum service: %v", err)
+	//} Quorum rm: check now moved to 495: (backend)
+
+	quorumValidateConsensus(ethereum, isRaft)
+
+	//quorumValidatePrivacyEnhancements(ethereum)
+}
+
+// quorumValidateConsensus checks if a consensus was used. The node is killed if consensus was not used
+func quorumValidateConsensus(ethereum *eth.Ethereum, isRaft bool) {
+	if !isRaft && ethereum.BlockChain().Config().Istanbul == nil && ethereum.BlockChain().Config().Clique == nil {
+		utils.Fatalf("Consensus not specified. Exiting!!")
+	}
+}
+
+// quorumValidatePrivacyEnhancements checks if privacy enhancements are configured the transaction manager supports
+// the PrivacyEnhancements feature
+//func quorumValidatePrivacyEnhancements(ethereum *eth.Ethereum) {
+//	privacyEnhancementsBlock := ethereum.BlockChain().Config().PrivacyEnhancementsBlock
+//	if privacyEnhancementsBlock != nil {
+//		log.Info("Privacy enhancements is configured to be enabled from block ", "height", privacyEnhancementsBlock)
+//		if !private.P.HasFeature(engine.PrivacyEnhancements) {
+//			utils.Fatalf("Cannot start quorum with privacy enhancements enabled while the transaction manager does not support it")
+//		}
+//	}
+//}
+
+// Get private transaction manager configuration
+//func QuorumSetupPrivacyConfiguration(ctx *cli.Context) (http.Config, error) {
+//	// get default configuration
+//	cfg, err := private.GetLegacyEnvironmentConfig()
+//	if err != nil {
+//		return http.Config{}, err
+//	}
+//
+//	// override the config with command line parameters
+//	if ctx.GlobalIsSet(utils.QuorumPTMUnixSocketFlag.Name) {
+//		cfg.SetSocket(ctx.GlobalString(utils.QuorumPTMUnixSocketFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMUrlFlag.Name) {
+//		cfg.SetHttpUrl(ctx.GlobalString(utils.QuorumPTMUrlFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMTimeoutFlag.Name) {
+//		cfg.SetTimeout(ctx.GlobalUint(utils.QuorumPTMTimeoutFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMDialTimeoutFlag.Name) {
+//		cfg.SetDialTimeout(ctx.GlobalUint(utils.QuorumPTMDialTimeoutFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMHttpIdleTimeoutFlag.Name) {
+//		cfg.SetHttpIdleConnTimeout(ctx.GlobalUint(utils.QuorumPTMHttpIdleTimeoutFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMHttpWriteBufferSizeFlag.Name) {
+//		cfg.SetHttpWriteBufferSize(ctx.GlobalInt(utils.QuorumPTMHttpWriteBufferSizeFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMHttpReadBufferSizeFlag.Name) {
+//		cfg.SetHttpReadBufferSize(ctx.GlobalInt(utils.QuorumPTMHttpReadBufferSizeFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMTlsModeFlag.Name) {
+//		cfg.SetTlsMode(ctx.GlobalString(utils.QuorumPTMTlsModeFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMTlsRootCaFlag.Name) {
+//		cfg.SetTlsRootCA(ctx.GlobalString(utils.QuorumPTMTlsRootCaFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMTlsClientCertFlag.Name) {
+//		cfg.SetTlsClientCert(ctx.GlobalString(utils.QuorumPTMTlsClientCertFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMTlsClientKeyFlag.Name) {
+//		cfg.SetTlsClientKey(ctx.GlobalString(utils.QuorumPTMTlsClientKeyFlag.Name))
+//	}
+//	if ctx.GlobalIsSet(utils.QuorumPTMTlsInsecureSkipVerify.Name) {
+//		cfg.SetTlsInsecureSkipVerify(ctx.Bool(utils.QuorumPTMTlsInsecureSkipVerify.Name))
+//	}
+//
+//	if err = cfg.Validate(); err != nil {
+//		return cfg, err
+//	}
+//	return cfg, nil
+//}

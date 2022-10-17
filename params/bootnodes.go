@@ -73,6 +73,20 @@ var YoloV2Bootnodes = []string{
 	"enode://9e1096aa59862a6f164994cb5cb16f5124d6c992cdbf4535ff7dea43ea1512afe5448dca9df1b7ab0726129603f1a3336b631e4d7a1a44c94daddd03241587f9@3.9.20.133:30303",
 }
 
+// MarvellexBootnodes are the enode URLs of the P2P bootstrap nodes running on the
+// Marvellex network.
+var MarvellexBootnodes = []string{
+	// TODO: Marvellex Bootnodes
+}
+
+var TestnetBootnodes = []string{
+	// Testnet v2: Bootnodes
+	"enode://f48770ff1a5b22c3f9725574571b8d0b737e1e3a8b66279c735ea5cd3561b96bc41ea4d88aa25b072a55557b2c56513437b8aabc1df1781816b3d3be467d314d@5.189.129.218:10303?discport=0",
+	"enode://ee1082f92d2b7cf81e1d01f5a31bebde4ba863f44877a7ea18d77489e4780a5adeff63417f7c8907d714bdaf236d0cc242252f6a02be61467e985213ea1c6e25@5.189.129.218:10304?discport=0",
+	"enode://ccb5c3d32c5d5007ef1996755c6fc9545eacd310c5a622cd96a9bd33a4efce9b84ad2c3ea5543254c65c27626425701cb646056c0925dd1f0db7a7a5ebc84e5e@5.189.129.218:10305?discport=0",
+	"enode://37816df5ef50e623ae4d804ae38a76a56304ecd37b96a0390e46f4234b42f135f62d55ee18e797e9cd4e04e52358eea92105f15f59143e53789117bce79f40e2@5.189.129.218:10306?discport=0",
+}
+
 const dnsPrefix = "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@"
 
 // KnownDNSNetwork returns the address of a public DNS-based node list for the given

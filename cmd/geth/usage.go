@@ -43,6 +43,8 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			utils.GoerliFlag,
 			utils.RinkebyFlag,
 			utils.YoloV2Flag,
+			utils.MarvellexFlag, // Marvellex Mainnet
+			utils.TestnetFlag,   // Marvellex Testnet 2
 			utils.RopstenFlag,
 			utils.SyncModeFlag,
 			utils.ExitWhenSyncedFlag,
@@ -199,6 +201,8 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			utils.VMEnableDebugFlag,
 			utils.EVMInterpreterFlag,
 			utils.EWASMInterpreterFlag,
+			// Quorum - timout for calls
+			utils.EVMCallTimeOutFlag,
 		},
 	},
 	{
@@ -235,6 +239,61 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			utils.LegacyGraphQLPortFlag,
 		}, debug.DeprecatedFlags...),
 	},
+	// QUORUM
+	{
+		Name: "QUORUM",
+		Flags: []cli.Flag{
+			utils.QuorumImmutabilityThreshold,
+			utils.EnableNodePermissionFlag,
+			//utils.PluginSettingsFlag,
+			//utils.PluginSkipVerifyFlag,
+			//utils.PluginLocalVerifyFlag,
+			//utils.PluginPublicKeyFlag, Quorum rm
+			utils.AllowedFutureBlockTimeFlag,
+			utils.MultitenancyFlag,
+		},
+	},
+	//{
+	//	Name: "QUORUM PRIVATE TRANSACTION MANAGER",
+	//	Flags: []cli.Flag{
+	//		utils.QuorumPTMUnixSocketFlag,
+	//		utils.QuorumPTMUrlFlag,
+	//		utils.QuorumPTMTimeoutFlag,
+	//		utils.QuorumPTMDialTimeoutFlag,
+	//		utils.QuorumPTMHttpIdleTimeoutFlag,
+	//		utils.QuorumPTMHttpWriteBufferSizeFlag,
+	//		utils.QuorumPTMHttpReadBufferSizeFlag,
+	//		utils.QuorumPTMTlsModeFlag,
+	//		utils.QuorumPTMTlsRootCaFlag,
+	//		utils.QuorumPTMTlsClientCertFlag,
+	//		utils.QuorumPTMTlsClientKeyFlag,
+	//		utils.QuorumPTMTlsInsecureSkipVerify,
+	//	},
+	//},
+	//{
+	//	Name: quorumAccountFlagGroup,
+	//	Flags: []cli.Flag{
+	//		utils.AccountPluginNewAccountConfigFlag,
+	//	},
+	//}, Quorum: rm
+	{
+		Name: "RAFT",
+		Flags: []cli.Flag{
+			utils.RaftModeFlag,
+			utils.RaftBlockTimeFlag,
+			utils.RaftJoinExistingFlag,
+			utils.RaftPortFlag,
+			utils.RaftDNSEnabledFlag,
+		},
+	},
+	{
+		Name: "ISTANBUL",
+		Flags: []cli.Flag{
+			utils.IstanbulRequestTimeoutFlag,
+			utils.IstanbulBlockPeriodFlag,
+		},
+	},
+	// END QUORUM
 	{
 		Name: "MISC",
 		Flags: []cli.Flag{

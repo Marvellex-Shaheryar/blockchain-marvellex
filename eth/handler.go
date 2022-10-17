@@ -20,6 +20,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/consensus/clique"
+	"github.com/ethereum/go-ethereum/consensus/ethash"
+	"github.com/ethereum/go-ethereum/crypto"
 	"math"
 	"math/big"
 	"sync"
@@ -95,6 +98,10 @@ type ProtocolManager struct {
 	wg        sync.WaitGroup
 	peerWG    sync.WaitGroup
 
+	// Quorum
+	raftMode bool
+	engine   consensus.Engine
+
 	// Test fields or hooks
 	broadcastTxAnnouncesOnly bool // Testing field, disable transaction propagation
 }
@@ -114,7 +121,15 @@ func NewProtocolManager(config *params.ChainConfig, checkpoint *params.TrustedCh
 		whitelist:  whitelist,
 		txsyncCh:   make(chan *txsync),
 		quitSync:   make(chan struct{}),
+		raftMode:    false, // Quorum, always false
+		engine:      engine,
 	}
+
+	// Quorum
+	if handler, ok := manager.engine.(consensus.Handler); ok {
+		handler.SetBroadcaster(manager)
+	}
+	// /Quorum
 
 	if mode == downloader.FullSync {
 		// The database seems empty as the current block is the genesis. Yet the fast
@@ -204,8 +219,44 @@ func NewProtocolManager(config *params.ChainConfig, checkpoint *params.TrustedCh
 	return manager, nil
 }
 
+
+// Quorum
+func (pm *ProtocolManager) getConsensusAlgorithm() string {
+	var consensusAlgo string
+	if pm.raftMode { // raft does not use consensus interface
+		consensusAlgo = "raft"
+	} else {
+		switch pm.engine.(type) {
+		case consensus.Istanbul:
+			consensusAlgo = "istanbul"
+		case *clique.Clique:
+			consensusAlgo = "clique"
+		case *ethash.Ethash:
+			consensusAlgo = "ethash"
+		default:
+			consensusAlgo = "unknown"
+		}
+	}
+	return consensusAlgo
+}
+
+func (pm *ProtocolManager) FindPeers(targets map[common.Address]bool) map[common.Address]consensus.Peer {
+	m := make(map[common.Address]consensus.Peer)
+	for _, p := range pm.peers.Peers() {
+		pubKey := p.Node().Pubkey()
+		addr := crypto.PubkeyToAddress(*pubKey)
+		if targets[addr] {
+			m[addr] = p
+		}
+	}
+	return m
+}
+
 func (pm *ProtocolManager) makeProtocol(version uint) p2p.Protocol {
-	length, ok := protocolLengths[version]
+	// Quorum
+	//length, ok := protocolLengths[version]
+	length, ok := pm.engine.Protocol().(consensus.Protocol).Lengths[version]
+
 	if !ok {
 		panic("makeProtocol for unknown version")
 	}
@@ -388,6 +439,17 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 		return errResp(ErrMsgTooLarge, "%v > %v", msg.Size, protocolMaxMsgSize)
 	}
 	defer msg.Discard()
+
+	// Quorum
+	if handler, ok := pm.engine.(consensus.Handler); ok {
+		pubKey := p.Node().Pubkey()
+		addr := crypto.PubkeyToAddress(*pubKey)
+		handled, err := handler.HandleMsg(addr, msg)
+		if handled {
+			return err
+		}
+	}
+	// /Quorum
 
 	// Handle the message depending on its contents
 	switch {
@@ -818,6 +880,11 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 	return nil
 }
 
+// Quorum
+func (pm *ProtocolManager) Enqueue(id string, block *types.Block) {
+	pm.blockFetcher.Enqueue(id, block)
+}
+
 // BroadcastBlock will either propagate a block to a subset of its peers, or
 // will only announce its availability (depending what's requested).
 func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
@@ -932,16 +999,27 @@ type NodeInfo struct {
 	Genesis    common.Hash         `json:"genesis"`    // SHA3 hash of the host's genesis block
 	Config     *params.ChainConfig `json:"config"`     // Chain configuration for the fork rules
 	Head       common.Hash         `json:"head"`       // SHA3 hash of the host's best owned block
+	Consensus  string              `json:"consensus"`  // Consensus mechanism in use
 }
 
 // NodeInfo retrieves some protocol metadata about the running host node.
 func (pm *ProtocolManager) NodeInfo() *NodeInfo {
 	currentBlock := pm.blockchain.CurrentBlock()
+
+	// //Quorum
+	//
+	// changes done to fetch maxCodeSize dynamically based on the
+	// maxCodeSizeConfig changes
+	// /Quorum
+	chainConfig := pm.blockchain.Config()
+	chainConfig.MaxCodeSize = uint64(chainConfig.GetMaxCodeSize(pm.blockchain.CurrentBlock().Number()) / 1024)
+
 	return &NodeInfo{
 		Network:    pm.networkID,
 		Difficulty: pm.blockchain.GetTd(currentBlock.Hash(), currentBlock.NumberU64()),
 		Genesis:    pm.blockchain.Genesis().Hash(),
 		Config:     pm.blockchain.Config(),
 		Head:       currentBlock.Hash(),
+		Consensus:  pm.getConsensusAlgorithm(),
 	}
 }
